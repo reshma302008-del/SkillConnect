@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Registration | SkillConnect</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container nav-wrap">
+        <a href="index.html" class="brand">
+            <span class="brand-mark">S</span>
+            SkillConnect
+        </a>
+
+        <button class="menu-toggle" id="menuToggle">☰</button>
+
+        <nav class="nav-links" id="navLinks">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="workshops.html">Workshops</a>
+            <a href="tracking.html">Track</a>
+        </nav>
+
+        <div class="nav-actions">
+            <a href="register.html" class="btn">Join Workshop</a>
+        </div>
+    </div>
+</header>
+
+<main>
+
+<section class="hero">
+    <div class="container">
+        <div class="hero-copy">
+            <p class="eyebrow">REGISTRATION TRACKER</p>
+            <h1>Track Your <span>Registration.</span></h1>
+            <p>
+                Check your workshop registration details
+                using your registration ID or registered email.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+
+        <div class="section-head">
+            <p class="eyebrow">CHECK YOUR STATUS</p>
+            <h2>Registration Details</h2>
+            <p>Enter your registration ID or email address below.</p>
+        </div>
+
+        <form id="trackingForm" class="form-card">
+
+            <div class="form-group">
+                <label for="trackingInput">
+                    Registration ID or Email
+                </label>
+
+                <input
+                    type="text"
+                    id="trackingInput"
+                    placeholder="Enter your ID or email"
+                    required>
+            </div>
+
+            <button type="submit" class="btn">
+                Track Registration →
+            </button>
+
+            <div id="trackingResult" class="tracking-result"></div>
+
+        </form>
+
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="cta-band">
+            <h2>Haven't Registered Yet?</h2>
+            <p>Explore our workshops and become part of the community.</p>
+            <a href="register.html" class="btn">Register Now →</a>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer class="footer">
+    <div class="container footer-grid">
+        <div>
+            <h2>SkillConnect</h2>
+            <p>Building skills and strengthening communities through learning.</p>
+        </div>
+
+        <div>
+            <h3>Quick Links</h3>
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="about.html">About</a>
+                <a href="workshops.html">Workshops</a>
+                <a href="register.html">Registration</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container footer-bottom">
+        <p>© 2026 SkillConnect. Community Learning Project.</p>
+    </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
