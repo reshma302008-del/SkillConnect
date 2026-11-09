@@ -83,14 +83,31 @@
 <div class="form-group">
     <label for="workshop">Select Workshop</label>
     <select id="workshop" name="workshop" required>
-        <option value="">Choose a workshop</option>
-        <option value="First Aid Training">First Aid Training</option>
-        <option value="Computer Usage">Computer Usage</option>
-        <option value="Personality Development">
-            Personality Development
-        </option>
+        <option value="">Loading workshops...</option>
     </select>
 </div>
+
+<div class="registration-seat-card" id="registrationAvailability">
+    <h3>Workshop Seat Availability</h3>
+
+    <p id="registrationSeatStatus">
+        Select a workshop to check seat availability.
+    </p>
+
+    <h2 id="registrationSeatCount">-- / 30</h2>
+
+    <p>Registered participants / Total capacity</p>
+
+    <div class="seat-progress">
+        <div class="seat-progress-fill"
+             id="registrationSeatProgress"></div>
+    </div>
+
+    <h3 id="registrationRemainingSeats">
+        Choose a workshop to see remaining seats.
+    </h3>
+</div>
+
            
 <div id="workshopSchedule" class="workshop-schedule" hidden>
     <h2>Workshop Venue & Schedule</h2>
@@ -100,7 +117,7 @@
             <span class="schedule-icon">📍</span>
             <div>
                 <h3>Venue</h3>
-                <p>Dr. T. Thimmaiah Institute of Technology</p>
+               <p id="scheduleLocation"></p>
                 <p>KGF, Karnataka</p>
             </div>
         </div>
@@ -117,7 +134,7 @@
             <span class="schedule-icon">🕒</span>
             <div>
                 <h3>Time</h3>
-                <p>10:00 AM – 12:00 PM</p>
+                <p id="scheduleTime"></p>
             </div>
         </div>
     </div>
@@ -173,6 +190,8 @@
     </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

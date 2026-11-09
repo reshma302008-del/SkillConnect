@@ -140,7 +140,7 @@
             <span class="schedule-icon">📅</span>
             <div>
                 <h3>Date</h3>
-                <p>28 November 2026</p>
+           <p id="workshopDate">Loading date...</p>
             </div>
         </div>
 
@@ -159,6 +159,28 @@
        rel="noopener noreferrer">
         View Location on Google Maps
     </a>
+    
+<div class="workshop-seat-card" id="workshopAvailability"
+     data-workshop-id="3">
+
+    <h2>Seats Availability</h2>
+
+    <div class="seat-status" id="seatStatus">
+        Loading availability...
+    </div>
+
+    <h2 id="seatCount">-- / 30</h2>
+
+    <p>Registered participants / Total capacity</p>
+
+    <div class="seat-progress">
+        <div class="seat-progress-fill" id="seatProgress"></div>
+    </div>
+
+    <h3 id="remainingSeats">Checking remaining seats...</h3>
+
+</div>
+
 </section>
 
 
@@ -187,6 +209,8 @@
     </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

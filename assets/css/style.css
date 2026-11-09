@@ -1067,3 +1067,124 @@ img {
     max-width: 100%;
     height: auto;
 }
+/* ADMIN WORKSHOP SEAT AVAILABILITY */
+
+.seat-management-section {
+    margin-top: 35px;
+}
+
+.seat-management-section > h2 {
+    color: #493078;
+    margin-bottom: 8px;
+}
+
+.seat-management-section > p {
+    color: #777;
+    margin-bottom: 22px;
+}
+
+.seat-admin-card {
+    background: linear-gradient(135deg, #ffffff, #f1eaff);
+    border: 1px solid #e0d2ff;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 6px 20px rgba(80, 45, 130, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.seat-admin-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(80, 45, 130, 0.15);
+}
+
+.seat-admin-card h3 {
+    color: #493078;
+    margin-bottom: 12px;
+}
+
+.seat-admin-card h2 {
+    color: #6741a5;
+    font-size: 30px;
+    margin: 16px 0 5px;
+}
+
+.seat-admin-card p {
+    color: #777;
+}
+
+.seat-admin-status {
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.seat-admin-status.available {
+    background: #e0f7ed;
+    color: #168653;
+}
+
+.seat-admin-status.full {
+    background: #ffe3e3;
+    color: #c62828;
+}
+
+.seat-admin-card .seat-progress {
+    height: 10px;
+    background: #e5dcf5;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 18px 0;
+}
+
+.seat-admin-card .seat-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8054c7, #b18bea);
+    border-radius: 20px;
+    transition: width 0.5s ease;
+}
+
+.seat-admin-card > h3:last-child {
+    color: #6741a5;
+    font-size: 16px;
+}
+
+/* SCROLL REVEAL ANIMATIONS */
+
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Accessibility: respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+/* STAGGER ANIMATION FOR WORKSHOP CARDS */
+
+.grid-3 > .card.reveal:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.grid-3 > .card.reveal:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.grid-3 > .card.reveal:nth-child(3) {
+    transition-delay: 0.3s;
+}
+
+.grid-3 > .card.reveal:nth-child(4) {
+    transition-delay: 0.4s;
+}

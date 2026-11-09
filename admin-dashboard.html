@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,34 +38,31 @@
             <button class="btn btn-primary" id="logoutBtn">Logout</button>
         </div>
 
-        <p class="demo-notice">
-            Demo Dashboard: Registration data is stored only in this browser.
-            This is not a secure, backend-connected admin system.
-        </p>
-
         <div class="dashboard-grid">
 
-            <div class="dashboard-card">
-                <h3>Total Registrations</h3>
-                <h2 id="totalRegistrations">0</h2>
-            </div>
+    <div class="dashboard-card">
+        <h3>Total Registrations</h3>
+        <h2 id="totalRegistrations">0</h2>
+    </div>
 
-            <div class="dashboard-card">
-                <h3>First Aid</h3>
-                <h2 id="firstAidCount">0</h2>
-            </div>
+</div>
 
-            <div class="dashboard-card">
-                <h3>Computer Usage</h3>
-                <h2 id="computerCount">0</h2>
-            </div>
+<!-- DYNAMIC WORKSHOP REGISTRATION COUNTS -->
 
-            <div class="dashboard-card">
-                <h3>Personality Development</h3>
-                <h2 id="personalityCount">0</h2>
-            </div>
+<div class="dashboard-grid" id="workshopRegistrationCards">
+    <p>Loading workshop statistics...</p>
+</div>
 
-        </div>
+<!-- WORKSHOP SEAT AVAILABILITY -->
+
+<section class="seat-management-section">
+    <h2>Workshop Seat Availability</h2>
+    <p>Monitor capacity and remaining seats for each workshop.</p>
+
+    <div class="dashboard-grid" id="adminSeatCards">
+        <p>Loading seat availability...</p>
+    </div>
+</section>
 
         <div class="dashboard-table-section">
             <h2>Participant Registrations</h2>
@@ -83,11 +81,167 @@
 
                     <tbody id="registrationTableBody">
                         <tr>
-                            <td colspan="5">No registrations available yet.</td>
+                            <td colspan="5">Loading registrations...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+        </div>
+        <!-- WORKSHOP MANAGEMENT -->
+
+<div class="workshop-management-section">
+
+    <h2>Workshop Management</h2>
+
+    <p>Add and manage workshops from the admin dashboard.</p>
+
+    <button class="btn btn-primary" id="addWorkshopBtn">
+        + Add New Workshop
+    </button>
+
+    <div id="workshopFormContainer" style="display: none;">
+
+        <h3 id="workshopFormTitle">Add Workshop</h3>
+
+        <form id="workshopForm">
+
+            <input type="hidden" id="workshopId">
+
+            <label for="workshopTitle">Workshop Title:</label>
+            <input type="text" id="workshopTitle" required>
+
+            <label for="workshopDescription">Description:</label>
+            <textarea id="workshopDescription" required></textarea>
+            <label for="workshopImage">Workshop Image:</label>
+<input type="file" id="workshopImage" accept="image/*">
+
+<label for="workshopTopics">Topics Covered:</label>
+<textarea id="workshopTopics"
+          placeholder="Enter topics separated by commas"
+          required></textarea>
+
+<label for="workshopOrganizer">Workshop Organiser:</label>
+<input type="text" id="workshopOrganizer"
+       placeholder="Enter organiser name" required>
+
+            <label for="workshopDate">Date:</label>
+            <input type="date" id="workshopDate" required>
+
+            <label for="workshopStartTime">Start Time:</label>
+            <input type="time" id="workshopStartTime" required>
+
+            <label for="workshopEndTime">End Time:</label>
+            <input type="time" id="workshopEndTime" required>
+
+            <label for="workshopLocation">Location:</label>
+            <input type="text" id="workshopLocation" required>
+
+            <label for="workshopCapacity">Maximum Seats:</label>
+            <input type="number" id="workshopCapacity"
+                   min="1" value="30" required>
+
+            <button type="submit" class="btn btn-primary">
+                Save Workshop
+            </button>
+
+            <button type="button" id="cancelWorkshopBtn">
+                Cancel
+            </button>
+
+        </form>
+
+        <p id="workshopMessage"></p>
+
+    </div>
+
+    <div id="workshopList">
+        <p>Loading workshops...</p>
+    </div>
+
+</div>
+
+        <!-- EXISTING ATTENDANCE MANAGEMENT -->
+
+        <div class="attendance-section">
+
+            <h2>Attendance Management</h2>
+
+            <p>Select a workshop and date to manage participant attendance.</p>
+            <!-- ATTENDANCE SUMMARY -->
+<div class="attendance-summary">
+
+    <div class="attendance-card">
+        <h3>Total Participants</h3>
+        <p id="totalAttendanceCount">0</p>
+    </div>
+
+    <div class="attendance-card">
+        <h3>Present</h3>
+        <p id="presentCount">0</p>
+    </div>
+
+    <div class="attendance-card">
+        <h3>Absent</h3>
+        <p id="absentCount">0</p>
+    </div>
+
+    <div class="attendance-card">
+        <h3>Not Marked</h3>
+        <p id="notMarkedCount">0</p>
+    </div>
+
+</div>
+
+            <div class="attendance-controls">
+
+                <div>
+                    <label for="attendanceWorkshop">Select Workshop:</label>
+
+                    <select id="attendanceWorkshop">
+    <option value="">Loading workshops...</option>
+</select>
+                </div>
+
+                <div>
+                    <label for="attendanceDate">Select Date:</label>
+                    <input type="date" id="attendanceDate">
+                </div>
+
+                <button class="btn btn-primary" id="loadAttendanceBtn">
+                    Load Participants
+                </button>
+
+            </div>
+
+            <div class="table-wrap">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Participant Name</th>
+                            <th>Email</th>
+                            <th>Workshop</th>
+                            <th>Attendance</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="attendanceTableBody">
+                        <tr>
+                            <td colspan="4">
+                                Select a workshop and date to view participants.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+
+            <button class="btn btn-primary" id="saveAttendanceBtn">
+                Save Attendance
+            </button>
+
+            <p id="attendanceMessage"></p>
+
         </div>
 
     </div>
@@ -99,75 +253,9 @@
     </div>
 </footer>
 
-<script src="assets/js/app.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/app.js"></script>
 
 </body>
 </html>
-        </div>
-<!-- ATTENDANCE MANAGEMENT -->
-
-<div class="attendance-section">
-
-    <h2>Attendance Management</h2>
-
-    <p>Select a workshop and date to manage participant attendance.</p>
-
-    <div class="attendance-controls">
-
-        <div>
-            <label for="attendanceWorkshop">Select Workshop:</label>
-
-            <select id="attendanceWorkshop">
-                <option value="">Choose Workshop</option>
-                <option value="First Aid Training">First Aid Training</option>
-                <option value="Computer Usage">Computer Usage</option>
-                <option value="Personality Development">
-                    Personality Development
-                </option>
-            </select>
-        </div>
-
-        <div>
-            <label for="attendanceDate">Select Date:</label>
-            <input type="date" id="attendanceDate">
-        </div>
-
-        <button class="btn btn-primary" id="loadAttendanceBtn">
-            Load Participants
-        </button>
-
-    </div>
-
-    <div class="table-wrap">
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Participant Name</th>
-                    <th>Email</th>
-                    <th>Workshop</th>
-                    <th>Attendance</th>
-                </tr>
-            </thead>
-
-            <tbody id="attendanceTableBody">
-                <tr>
-                    <td colspan="4">
-                        Select a workshop and date to view participants.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-    </div>
-
-    <button class="btn btn-primary" id="saveAttendanceBtn">
-        Save Attendance
-    </button>
-
-    <p id="attendanceMessage"></p>
-
-</div>
-
-    </div>
-</main>

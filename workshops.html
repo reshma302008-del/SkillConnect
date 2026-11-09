@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,69 +52,13 @@
         <div class="section-head">
             <p class="eyebrow">OUR PROGRAMS</p>
             <h2>Choose What You Want to Learn</h2>
-            <p>Explore our three community skill-building areas.</p>
+            <p>Explore our community skill-building workshops.</p>
         </div>
 
-        <div class="grid-3">
-
-            <!-- FIRST AID WORKSHOP -->
-            <div class="card">
-                <img class="card-img"
-                    src="https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=700&q=80"
-                    alt="First aid training">
-
-                <div class="card-body">
-                    <span class="tag">Health & Safety</span>
-                    <h3>First Aid Training</h3>
-                    <p>
-                        Understand basic first aid, emergency awareness
-                        and important safety practices.
-                    </p>
-                    <a href="first-aid.html" class="card-link">
-                        View Workshop →
-                    </a>
-                </div>
-            </div>
-
-            <!-- COMPUTER WORKSHOP -->
-            <div class="card">
-                <img class="card-img"
-                    src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=700&q=80"
-                    alt="Computer training">
-
-                <div class="card-body">
-                    <span class="tag">Digital Skills</span>
-                    <h3>Computer Usage</h3>
-                    <p>
-                        Learn computer basics, internet usage,
-                        document creation and digital tools.
-                    </p>
-                    <a href="computer.html" class="card-link">
-                        View Workshop →
-                    </a>
-                </div>
-            </div>
-
-            <!-- PERSONALITY DEVELOPMENT -->
-            <div class="card">
-                <img class="card-img"
-                    src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=700&q=80"
-                    alt="Personality development">
-
-                <div class="card-body">
-                    <span class="tag">Personal Growth</span>
-                    <h3>Personality Development</h3>
-                    <p>
-                        Improve communication, confidence,
-                        teamwork and presentation skills.
-                    </p>
-                    <a href="personality.html" class="card-link">
-                        View Workshop →
-                    </a>
-                </div>
-            </div>
-
+        <div class="grid-3" id="publicWorkshopList">
+            <p>Loading available workshops...</p>
         </div>
+
     </div>
 </section>
 
@@ -152,6 +97,9 @@
     </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase-client.js"></script>
 <script src="assets/js/app.js"></script>
+
 </body>
 </html>
