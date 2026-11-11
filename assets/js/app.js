@@ -1,3 +1,4 @@
+
 // MOBILE MENU
 const menuToggle = document.getElementById("menuToggle");
 const navLinks = document.getElementById("navLinks");
@@ -25,8 +26,8 @@ document.querySelectorAll(".current-year").forEach(function (element) {
 const registrationForm = document.getElementById("registrationForm");
 const registrationWorkshopSelect = document.getElementById("workshop");
 
-let
- registrationWorkshopData = [];
+let registrationWorkshopData = [];
+
 // LOAD WORKSHOPS FROM SUPABASE
 async function loadRegistrationWorkshops() {
     if (!registrationWorkshopSelect) return;
@@ -41,12 +42,13 @@ async function loadRegistrationWorkshops() {
         console.error("Workshop loading error:", error);
         return;
     }
+
     registrationWorkshopData = data || [];
 
     registrationWorkshopSelect.innerHTML =
         '<option value="">Choose a Workshop</option>';
 
-        data.forEach(function (workshop) {
+    data.forEach(function (workshop) {
         const option = document.createElement("option");
         option.value = workshop.id;
         option.textContent = workshop.title;
@@ -64,7 +66,9 @@ async function loadRegistrationWorkshops() {
         );
     }
 }
+
 loadRegistrationWorkshops();
+
 
 // SUBMIT REGISTRATION
 if (registrationForm) {
@@ -101,22 +105,23 @@ if (registrationForm) {
         );
 
         if (error) {
-    
-    console.log("SUPABASE ERROR:", error.message); 
-     if (error.message.includes("Workshop Full")) {
-        formMessage.textContent =
-            "Sorry! This workshop is full. Please choose another workshop.";
-    } else if (error.message.includes("already registered")) {
-        formMessage.textContent =
-            "You have already registered for this workshop.";
-    } else {
-        formMessage.textContent =
-            "Registration failed. Please try again.";
-    }
 
-    formMessage.className = "form-message error";
-    return;
-}
+            console.log("SUPABASE ERROR:", error.message);
+
+            if (error.message.includes("Workshop Full")) {
+                formMessage.textContent =
+                    "Sorry! This workshop is full. Please choose another workshop.";
+            } else if (error.message.includes("already registered")) {
+                formMessage.textContent =
+                    "You have already registered for this workshop.";
+            } else {
+                formMessage.textContent =
+                    "Registration failed. Please try again.";
+            }
+
+            formMessage.className = "form-message error";
+            return;
+        }
 
         const registrationCode = data[0].registration_code;
 
@@ -129,10 +134,8 @@ if (registrationForm) {
 }
 
 
-
-
-
 // TRACKING FORM - SUPABASE
+
 const trackingForm = document.getElementById("trackingForm");
 
 if (trackingForm) {
@@ -166,11 +169,14 @@ if (trackingForm) {
             const date = r.workshop_date
                 ? new Date(r.workshop_date + "T00:00:00")
                     .toLocaleDateString("en-IN", {
-                        day: "2-digit", month: "long", year: "numeric"
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric"
                     })
                 : "To be announced";
 
             result.className = "tracking-result";
+
             result.innerHTML = `
                 <h3>Registration Found!</h3>
                 <p><strong>Name:</strong> ${r.participant_name}</p>
@@ -238,14 +244,15 @@ if (adminLoginForm) {
 }
 
 
-
-
 // ADMIN DASHBOARD - SUPABASE DATABASE
+// PARTICIPANT EDITING AND CANCELLATION INCLUDED
 
 const registrationTableBody =
     document.getElementById("registrationTableBody");
 
 if (registrationTableBody) {
+
+    window.currentRegistrations = [];
 
     async function loadAdminDashboard() {
 
@@ -267,15 +274,19 @@ if (registrationTableBody) {
         }
 
         registrationTableBody.innerHTML =
-            '<tr><td colspan="5">Loading registrations...</td></tr>';
+            '<tr><td colspan="6">Loading registrations...</td></tr>';
 
         const { data: registrations, error } =
             await window.supabaseClient
                 .from("registrations")
                 .select(`
+                    id,
                     registration_code,
                     participant_name,
                     email,
+                    phone,
+                    age,
+                    message,
                     status,
                     workshop_id,
                     workshops(title)
@@ -286,61 +297,83 @@ if (registrationTableBody) {
             console.error("Registration loading error:", error);
 
             registrationTableBody.innerHTML =
-                '<tr><td colspan="5">Unable to load registrations.</td></tr>';
+                '<tr><td colspan="6">Unable to load registrations.</td></tr>';
 
             return;
         }
 
+        window.currentRegistrations = registrations || [];
+
+document.getElementById("totalRegistrations").textContent =
+    registrations.length;
+
+        // STORE REGISTRATIONS FOR EDITING
+        window.currentRegistrations = registrations || [];
+
+        // COUNT ONLY ACTIVE REGISTRATIONS
+        const activeRegistrations = registrations.filter(
+            registration => registration.status === "Registered"
+        );
+
         document.getElementById("totalRegistrations").textContent =
-            registrations.length;
+            activeRegistrations.length;
 
         // LOAD DYNAMIC WORKSHOP REGISTRATION COUNTS
 
-const workshopCards = document.getElementById(
-    "workshopRegistrationCards"
-);
+        const workshopCards = document.getElementById(
+            "workshopRegistrationCards"
+        );
 
-const { data: workshops, error: workshopError } =
-    await window.supabaseClient
-        .from("workshops")
-        .select("id, title")
-        .order("id", { ascending: true });
+        const { data: workshops, error: workshopError } =
+            await window.supabaseClient
+                .from("workshops")
+                .select("id, title")
+                .order("id", { ascending: true });
 
-if (workshopError) {
-    console.error("Workshop statistics error:", workshopError);
-    workshopCards.textContent = "Unable to load workshop statistics.";
-} else {
+        if (workshopError) {
 
-    workshopCards.innerHTML = "";
+            console.error("Workshop statistics error:", workshopError);
+            workshopCards.textContent =
+                "Unable to load workshop statistics.";
 
-    workshops.forEach(function (workshop) {
+        } else {
 
-        const count = registrations.filter(function (registration) {
-            return Number(registration.workshop_id) === Number(workshop.id);
-        }).length;
+            workshopCards.innerHTML = "";
 
-        const card = document.createElement("div");
-        card.className = "dashboard-card";
+            workshops.forEach(function (workshop) {
 
-        const heading = document.createElement("h3");
-        heading.textContent = workshop.title;
+                const count = activeRegistrations.filter(
+                    registration =>
+                        Number(registration.workshop_id) ===
+                        Number(workshop.id)
+                ).length;
 
-        const number = document.createElement("h2");
-        number.textContent = count;
+                const card = document.createElement("div");
+                card.className = "dashboard-card";
 
-        card.appendChild(heading);
-        card.appendChild(number);
+                const heading = document.createElement("h3");
+                heading.textContent = workshop.title;
 
-        workshopCards.appendChild(card);
+                const number = document.createElement("h2");
+                number.textContent = count;
 
-    });
-}
+                card.appendChild(heading);
+                card.appendChild(number);
+
+                workshopCards.appendChild(card);
+
+            });
+        }
+
+        // DISPLAY PARTICIPANTS
 
         registrationTableBody.innerHTML = "";
 
         if (registrations.length === 0) {
+
             registrationTableBody.innerHTML =
-                '<tr><td colspan="5">No registrations available yet.</td></tr>';
+                '<tr><td colspan="6">No registrations available yet.</td></tr>';
+
             return;
         }
 
@@ -357,16 +390,420 @@ if (workshopError) {
             ];
 
             values.forEach(function (value) {
+
                 const cell = document.createElement("td");
                 cell.textContent = value || "";
                 row.appendChild(cell);
+
             });
 
+            // ACTION BUTTONS
+
+            const actionCell = document.createElement("td");
+
+            const editButton = document.createElement("button");
+            editButton.type = "button";
+            editButton.textContent = "Edit";
+            editButton.className = "btn btn-primary";
+            editButton.dataset.id = registration.id;
+            editButton.dataset.action = "edit";
+
+            const cancelButton = document.createElement("button");
+            cancelButton.type = "button";
+            cancelButton.textContent =
+                registration.status === "Cancelled"
+                    ? "Cancelled"
+                    : "Cancel";
+
+            cancelButton.className = "btn btn-primary";
+            cancelButton.dataset.id = registration.id;
+            cancelButton.dataset.action = "cancel";
+
+            if (registration.status === "Cancelled") {
+                cancelButton.disabled = true;
+            }
+
+            actionCell.appendChild(editButton);
+            actionCell.appendChild(cancelButton);
+
+            row.appendChild(actionCell);
+
             registrationTableBody.appendChild(row);
+
         });
     }
+    // EXPORT PARTICIPANT REGISTRATIONS AS CSV
 
+const exportRegistrationsBtn = document.getElementById(
+    "exportRegistrationsBtn"
+);
+
+if (exportRegistrationsBtn) {
+
+    exportRegistrationsBtn.addEventListener("click", function () {
+
+        const registrations = window.currentRegistrations || [];
+
+        if (registrations.length === 0) {
+            alert("No participant registrations available to export.");
+            return;
+        }
+
+        const headers = [
+            "Registration ID",
+            "Participant Name",
+            "Email",
+            "Phone",
+            "Age",
+            "Workshop",
+            "Status",
+            "Additional Message"
+        ];
+
+        function escapeCSV(value) {
+
+            let text = String(value ?? "");
+
+            // Prevent spreadsheet formula execution
+            if (/^[\s]*[=+\-@]/.test(text)) {
+                text = "'" + text;
+            }
+
+            return '"' + text.replace(/"/g, '""') + '"';
+        }
+
+        const rows = registrations.map(function (registration) {
+
+            return [
+                registration.registration_code,
+                registration.participant_name,
+                registration.email,
+                registration.phone,
+                registration.age,
+                registration.workshops?.title || "Unknown Workshop",
+                registration.status,
+                registration.message
+            ];
+
+        });
+
+        const csvContent = [
+            headers,
+            ...rows
+        ]
+            .map(row => row.map(escapeCSV).join(","))
+            .join("\r\n");
+
+        const blob = new Blob(
+            ["\uFEFF" + csvContent],
+            { type: "text/csv;charset=utf-8;" }
+        );
+
+        const url = URL.createObjectURL(blob);
+
+        const downloadLink = document.createElement("a");
+
+        downloadLink.href = url;
+        downloadLink.download =
+            "SkillConnect_Participant_Registrations.csv";
+
+        document.body.appendChild(downloadLink);
+
+        downloadLink.click();
+
+        document.body.removeChild(downloadLink);
+
+        URL.revokeObjectURL(url);
+
+        alert("Participant CSV report downloaded successfully!");
+
+    });
+
+}
+
+
+    // OPEN EDIT PARTICIPANT FORM
+
+    registrationTableBody.addEventListener("click", function (event) {
+
+        const button = event.target.closest(
+            "button[data-action='edit']"
+        );
+
+        if (!button) return;
+
+        const participantId = Number(button.dataset.id);
+
+        const registration = window.currentRegistrations.find(
+            item => Number(item.id) === participantId
+        );
+
+        if (!registration) {
+            alert("Participant details not found. Please refresh the page.");
+            return;
+        }
+
+        document.getElementById("editParticipantId").value =
+            registration.id;
+
+        document.getElementById("editParticipantName").value =
+            registration.participant_name || "";
+
+        document.getElementById("editParticipantEmail").value =
+            registration.email || "";
+
+        document.getElementById("editParticipantPhone").value =
+            registration.phone || "";
+
+        document.getElementById("editParticipantAge").value =
+            registration.age || "";
+
+        document.getElementById("editParticipantMessage").value =
+            registration.message || "";
+
+        document.getElementById("editParticipantMessageStatus").textContent =
+            "";
+
+        const editContainer = document.getElementById(
+            "editParticipantContainer"
+        );
+
+        editContainer.style.display = "block";
+
+        editContainer.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+    });
+
+
+    // CANCEL PARTICIPANT REGISTRATION
+    // PRESERVES ATTENDANCE HISTORY
+
+    registrationTableBody.addEventListener("click", async function (event) {
+
+        const button = event.target.closest(
+            "button[data-action='cancel']"
+        );
+
+        if (!button || button.disabled) return;
+
+        const participantId = Number(button.dataset.id);
+
+        const registration = window.currentRegistrations.find(
+            item => Number(item.id) === participantId
+        );
+
+        if (!registration) {
+            alert("Participant not found. Please refresh the page.");
+            return;
+        }
+
+        const confirmed = confirm(
+            "Are you sure you want to cancel the registration of " +
+            registration.participant_name +
+            "?\n\nTheir attendance history will be preserved."
+        );
+
+        if (!confirmed) return;
+
+        button.disabled = true;
+        button.textContent = "Cancelling...";
+
+        const { error } = await window.supabaseClient
+            .from("registrations")
+            .update({ status: "Cancelled" })
+            .eq("id", participantId);
+
+        if (error) {
+
+            console.error("Registration cancellation error:", error);
+
+            alert("Unable to cancel registration. Please try again.");
+
+            button.disabled = false;
+            button.textContent = "Cancel";
+
+            return;
+        }
+
+        alert("Registration cancelled successfully!");
+
+        await loadAdminDashboard();
+
+        await loadAdminSeatAvailability();
+
+    });
+
+
+    // SAVE EDITED PARTICIPANT DETAILS
+
+    const editParticipantForm = document.getElementById(
+        "editParticipantForm"
+    );
+
+    if (editParticipantForm) {
+
+        editParticipantForm.addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const participantId = Number(
+                document.getElementById("editParticipantId").value
+            );
+
+            const registration = window.currentRegistrations.find(
+                item => Number(item.id) === participantId
+            );
+
+            const message = document.getElementById(
+                "editParticipantMessageStatus"
+            );
+
+            if (!registration) {
+                message.textContent =
+                    "Participant not found. Please refresh the page.";
+                return;
+            }
+
+            const name = document.getElementById(
+                "editParticipantName"
+            ).value.trim();
+
+            const email = document.getElementById(
+                "editParticipantEmail"
+            ).value.trim().toLowerCase();
+
+            const phone = document.getElementById(
+                "editParticipantPhone"
+            ).value.trim();
+
+            const age = Number(
+                document.getElementById("editParticipantAge").value
+            );
+
+            const additionalMessage = document.getElementById(
+                "editParticipantMessage"
+            ).value.trim();
+
+            if (!name || !email || !phone || !age) {
+                message.textContent =
+                    "Please fill in all required fields.";
+                return;
+            }
+
+            if (!/^[0-9]{10}$/.test(phone)) {
+                message.textContent =
+                    "Please enter a valid 10-digit phone number.";
+                return;
+            }
+
+            if (!Number.isInteger(age) || age < 1 || age > 120) {
+                message.textContent =
+                    "Please enter a valid age.";
+                return;
+            }
+
+            message.textContent = "Checking participant details...";
+
+            // CHECK DUPLICATE EMAIL IN THE SAME WORKSHOP
+
+            const { data: duplicate, error: duplicateError } =
+                await window.supabaseClient
+                    .from("registrations")
+                    .select("id")
+                    .eq("workshop_id", registration.workshop_id)
+                    .ilike("email", email)
+                    .neq("id", participantId)
+                    .limit(1);
+
+            if (duplicateError) {
+
+                console.error("Duplicate check error:", duplicateError);
+
+                message.textContent =
+                    "Unable to verify email. Please try again.";
+
+                return;
+            }
+
+            if (duplicate && duplicate.length > 0) {
+
+                message.textContent =
+                    "This email is already registered for this workshop.";
+
+                return;
+            }
+
+            message.textContent = "Saving participant details...";
+
+            const { error } = await window.supabaseClient
+                .from("registrations")
+                .update({
+                    participant_name: name,
+                    email: email,
+                    phone: phone,
+                    age: age,
+                    message: additionalMessage || null
+                })
+                .eq("id", participantId);
+
+            if (error) {
+
+                console.error("Participant update error:", error);
+
+                message.textContent =
+                    "Unable to save changes. Please try again.";
+
+                return;
+            }
+
+            message.textContent =
+                "Participant details updated successfully!";
+
+            document.getElementById(
+                "editParticipantContainer"
+            ).style.display = "none";
+
+            editParticipantForm.reset();
+
+            await loadAdminDashboard();
+
+        });
+
+    }
+
+
+    // CANCEL EDITING
+
+    const cancelParticipantEdit = document.getElementById(
+        "cancelParticipantEdit"
+    );
+
+    if (cancelParticipantEdit) {
+
+        cancelParticipantEdit.addEventListener("click", function () {
+
+            document.getElementById(
+                "editParticipantContainer"
+            ).style.display = "none";
+
+            if (editParticipantForm) {
+                editParticipantForm.reset();
+            }
+
+            document.getElementById(
+                "editParticipantMessageStatus"
+            ).textContent = "";
+
+        });
+
+    }
+
+    // INITIAL DASHBOARD LOAD
     loadAdminDashboard();
+
 }
 
 
@@ -426,28 +863,38 @@ if (workshopList) {
             editBtn.className = "btn btn-primary";
 
             editBtn.addEventListener("click", function () {
+
                 document.getElementById("workshopId").value = workshop.id;
                 document.getElementById("workshopTitle").value = workshop.title;
-                document.getElementById("workshopDescription").value = workshop.description|| "";
-document.getElementById("workshopTopics").value =
-    Array.isArray(workshop.topics) ? workshop.topics.join(", ") : "";
+                document.getElementById("workshopDescription").value =
+                    workshop.description || "";
 
-document.getElementById("workshopOrganizer").value =
-    workshop.organizer || "";
+                document.getElementById("workshopTopics").value =
+                    Array.isArray(workshop.topics)
+                        ? workshop.topics.join(", ")
+                        : "";
 
-document.getElementById("workshopImage").value = "";
+                document.getElementById("workshopOrganizer").value =
+                    workshop.organizer || "";
+
+                document.getElementById("workshopImage").value = "";
                 document.getElementById("workshopDate").value = workshop.date;
                 document.getElementById("workshopStartTime").value = workshop.start_time;
                 document.getElementById("workshopEndTime").value = workshop.end_time;
                 document.getElementById("workshopLocation").value = workshop.location;
                 document.getElementById("workshopCapacity").value = workshop.capacity;
 
-                document.getElementById("workshopFormTitle").textContent = "Edit Workshop";
-                document.getElementById("workshopFormContainer").style.display = "block";
+                document.getElementById("workshopFormTitle").textContent =
+                    "Edit Workshop";
+
+                document.getElementById("workshopFormContainer").style.display =
+                    "block";
+
                 document.getElementById("workshopMessage").textContent = "";
 
                 document.getElementById("workshopFormContainer")
                     .scrollIntoView({ behavior: "smooth" });
+
             });
 
             const toggleBtn = document.createElement("button");
@@ -462,7 +909,9 @@ document.getElementById("workshopImage").value = "";
                     ? "deactivate"
                     : "activate";
 
-                if (!confirm("Are you sure you want to " + action + " this workshop?")) {
+                if (!confirm(
+                    "Are you sure you want to " + action + " this workshop?"
+                )) {
                     return;
                 }
 
@@ -479,6 +928,7 @@ document.getElementById("workshopImage").value = "";
 
                 alert("Workshop status updated successfully!");
                 loadWorkshops();
+
             });
 
             const deleteBtn = document.createElement("button");
@@ -506,6 +956,7 @@ document.getElementById("workshopImage").value = "";
 
                 alert("Workshop deleted successfully!");
                 loadWorkshops();
+
             });
 
             card.appendChild(title);
@@ -522,6 +973,7 @@ document.getElementById("workshopImage").value = "";
 
     loadWorkshops();
 }
+
 
 // SHOW AND HIDE WORKSHOP FORM
 
@@ -582,7 +1034,6 @@ if (cancelWorkshopBtn && workshopFormContainer) {
 }
 
 
- 
 // SAVE OR UPDATE WORKSHOP IN SUPABASE
 
 if (workshopForm) {
@@ -643,7 +1094,9 @@ if (workshopForm) {
         if (imageFile) {
 
             const extension = imageFile.name.split(".").pop().toLowerCase();
-            const imagePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+
+            const imagePath =
+                `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
 
             const { error: uploadError } = await window.supabaseClient
                 .storage
@@ -725,12 +1178,23 @@ if (logoutBtn) {
     });
 }
 
+
 // ATTENDANCE MANAGEMENT
 
 const loadAttendanceBtn = document.getElementById("loadAttendanceBtn");
 const saveAttendanceBtn = document.getElementById("saveAttendanceBtn");
 const attendanceWorkshop = document.getElementById("attendanceWorkshop");
-// LOAD WORKSHOPS INTO ATTENDANCE DROPDOWN
+const attendanceDate = document.getElementById("attendanceDate");
+const attendanceTableBody = document.getElementById("attendanceTableBody");
+const attendanceMessage = document.getElementById("attendanceMessage");
+
+// ATTENDANCE SUMMARY COUNTERS
+
+const totalAttendanceCount = document.getElementById("totalAttendanceCount");
+const presentCount = document.getElementById("presentCount");
+const absentCount = document.getElementById("absentCount");
+
+// LOAD ACTIVE WORKSHOPS
 
 if (attendanceWorkshop) {
 
@@ -739,7 +1203,8 @@ if (attendanceWorkshop) {
         const { data: workshops, error } =
             await window.supabaseClient
                 .from("workshops")
-                .select("id, title, is_active")
+                .select("id, title")
+                .eq("is_active", true)
                 .order("id", { ascending: true });
 
         if (error) {
@@ -755,11 +1220,8 @@ if (attendanceWorkshop) {
         workshops.forEach(function (workshop) {
 
             const option = document.createElement("option");
-
             option.value = workshop.id;
-            option.textContent = workshop.is_active
-                ? workshop.title
-                : workshop.title + " (Inactive)";
+            option.textContent = workshop.title;
 
             attendanceWorkshop.appendChild(option);
 
@@ -768,15 +1230,10 @@ if (attendanceWorkshop) {
 
     loadAttendanceWorkshops();
 }
-const attendanceDate = document.getElementById("attendanceDate");
-const attendanceTableBody = document.getElementById("attendanceTableBody");
-const attendanceMessage = document.getElementById("attendanceMessage");
-// ATTENDANCE SUMMARY COUNTERS
-const totalAttendanceCount = document.getElementById("totalAttendanceCount");
-const presentCount = document.getElementById("presentCount");
-const absentCount = document.getElementById("absentCount");
-const notMarkedCount = document.getElementById("notMarkedCount");
+
+
 // UPDATE ATTENDANCE SUMMARY
+
 function updateAttendanceSummary() {
 
     const selects = attendanceTableBody.querySelectorAll(
@@ -785,7 +1242,6 @@ function updateAttendanceSummary() {
 
     let present = 0;
     let absent = 0;
-    let notMarked = 0;
 
     selects.forEach(function (select) {
 
@@ -793,8 +1249,6 @@ function updateAttendanceSummary() {
             present++;
         } else if (select.value === "Absent") {
             absent++;
-        } else {
-            notMarked++;
         }
 
     });
@@ -802,16 +1256,25 @@ function updateAttendanceSummary() {
     totalAttendanceCount.textContent = selects.length;
     presentCount.textContent = present;
     absentCount.textContent = absent;
-    notMarkedCount.textContent = notMarked;
 }
 
-// Set today's date automatically
+
+// SET TODAY'S LOCAL DATE
+
 if (attendanceDate) {
-    attendanceDate.value = new Date().toISOString().split("T")[0];
+
+    const today = new Date();
+
+    const localDate = new Date(
+        today.getTime() - today.getTimezoneOffset() * 60000
+    ).toISOString().split("T")[0];
+
+    attendanceDate.value = localDate;
 }
 
 
-// LOAD PARTICIPANTS FROM SUPABASE
+// LOAD PARTICIPANTS AND EXISTING DATE-WISE ATTENDANCE
+
 if (loadAttendanceBtn) {
 
     loadAttendanceBtn.addEventListener("click", async function () {
@@ -830,8 +1293,9 @@ if (loadAttendanceBtn) {
         const { data: participants, error } =
             await window.supabaseClient
                 .from("registrations")
-                .select("id, participant_name, email, attendance")
+                .select("id, participant_name, email")
                 .eq("workshop_id", Number(workshop))
+                .eq("status", "Registered")
                 .order("created_at", { ascending: true });
 
         if (error) {
@@ -842,10 +1306,31 @@ if (loadAttendanceBtn) {
         }
 
         if (!participants || participants.length === 0) {
+
             attendanceTableBody.innerHTML =
-                `<tr><td colspan="4">No participants registered for this workshop.</td></tr>`;
+                '<tr><td colspan="4">No active participants registered for this workshop.</td></tr>';
 
             attendanceMessage.textContent = "No participants found.";
+            updateAttendanceSummary();
+            return;
+        }
+
+        // GET ATTENDANCE ALREADY SAVED FOR THIS DATE
+
+        const { data: savedAttendance, error: attendanceError } =
+            await window.supabaseClient
+                .from("attendance_records")
+                .select("registration_id, status")
+                .eq("workshop_id", Number(workshop))
+                .eq("attendance_date", date);
+
+        if (attendanceError) {
+
+            console.error("Attendance error:", attendanceError);
+
+            attendanceMessage.textContent =
+                "Error: " + attendanceError.message;
+
             return;
         }
 
@@ -873,27 +1358,30 @@ if (loadAttendanceBtn) {
             select.className = "attendance-status";
             select.dataset.participantId = person.id;
 
-            const options = [
-                { value: "", text: "Not Marked" },
-                { value: "Present", text: "Present" },
-                { value: "Absent", text: "Absent" }
-            ];
+            const chooseOption = document.createElement("option");
+            chooseOption.value = "";
+            chooseOption.textContent = "Choose status";
+            select.appendChild(chooseOption);
 
-            options.forEach(function (item) {
+            ["Present", "Absent"].forEach(function (status) {
 
                 const option = document.createElement("option");
-                option.value = item.value;
-                option.textContent = item.text;
+                option.value = status;
+                option.textContent = status;
 
                 select.appendChild(option);
+
             });
 
-            if (person.attendance === true) {
-                select.value = "Present";
-            } else if (person.attendance === false) {
-                select.value = "Absent";
-            } else {
-                select.value = "";
+            // PREFILL ONLY FROM THE SELECTED DATE'S RECORDS
+
+            const existingRecord = savedAttendance.find(
+                record =>
+                    Number(record.registration_id) === Number(person.id)
+            );
+
+            if (existingRecord) {
+                select.value = existingRecord.status;
             }
 
             attendanceCell.appendChild(select);
@@ -904,65 +1392,92 @@ if (loadAttendanceBtn) {
             row.appendChild(attendanceCell);
 
             attendanceTableBody.appendChild(row);
-            // Update counters whenever attendance status changes
-select.addEventListener("change", updateAttendanceSummary);
+
+            select.addEventListener("change", updateAttendanceSummary);
+
         });
+
+        updateAttendanceSummary();
 
         attendanceMessage.textContent =
             participants.length + " participant(s) loaded.";
-            updateAttendanceSummary();
 
     });
 }
 
 
-// SAVE ATTENDANCE TO SUPABASE
+// SAVE DATE-WISE ATTENDANCE TO SUPABASE
+
 if (saveAttendanceBtn) {
 
     saveAttendanceBtn.addEventListener("click", async function () {
+
+        const workshop = attendanceWorkshop.value;
+        const date = attendanceDate.value;
 
         const selects = attendanceTableBody.querySelectorAll(
             ".attendance-status"
         );
 
-        if (selects.length === 0) {
+        if (!workshop || !date || selects.length === 0) {
             attendanceMessage.textContent =
-                "Please load participants first.";
+                "Please select a workshop and load participants first.";
+            return;
+        }
+
+        // VALIDATE THAT EVERY PARTICIPANT HAS A STATUS
+
+        const incomplete = Array.from(selects).some(
+            select => !select.value
+        );
+
+        if (incomplete) {
+            attendanceMessage.textContent =
+                "Please choose Present or Absent for every participant.";
             return;
         }
 
         attendanceMessage.textContent = "Saving attendance...";
+        saveAttendanceBtn.disabled = true;
 
-        for (const select of selects) {
+        const attendanceRecords = Array.from(selects).map(function (select) {
 
-            let attendanceValue = null;
+            return {
+                registration_id: Number(select.dataset.participantId),
+                workshop_id: Number(workshop),
+                attendance_date: date,
+                status: select.value,
+                updated_at: new Date().toISOString()
+            };
 
-            if (select.value === "Present") {
-                attendanceValue = true;
-            } else if (select.value === "Absent") {
-                attendanceValue = false;
-            }
+        });
 
-            const { error } = await window.supabaseClient
-                .from("registrations")
-                .update({ attendance: attendanceValue })
-                .eq("id", Number(select.dataset.participantId));
+        const { error } = await window.supabaseClient
+            .from("attendance_records")
+            .upsert(attendanceRecords, {
+                onConflict: "registration_id,workshop_id,attendance_date"
+            });
 
-            if (error) {
-                console.error(error);
-                attendanceMessage.textContent =
-                    "Error saving attendance. Please try again.";
-                return;
-            }
+        saveAttendanceBtn.disabled = false;
+
+        if (error) {
+            console.error("Attendance save error:", error);
+            attendanceMessage.textContent =
+                "Error saving attendance. Please try again.";
+            return;
         }
 
         attendanceMessage.textContent =
             "Attendance saved successfully!";
 
+        updateAttendanceSummary();
+
     });
 }
 
+
 // DYNAMIC WORKSHOP SCHEDULE DISPLAY
+
 const workshopSelect = document.getElementById("workshop");
 const workshopSchedule = document.getElementById("workshopSchedule");
 const scheduleDate = document.getElementById("scheduleDate");
@@ -970,7 +1485,9 @@ const scheduleLocation = document.getElementById("scheduleLocation");
 const scheduleTime = document.getElementById("scheduleTime");
 
 if (workshopSelect && workshopSchedule) {
+
     workshopSelect.addEventListener("change", function () {
+
         const selectedWorkshop = registrationWorkshopData.find(
             workshop => Number(workshop.id) === Number(this.value)
         );
@@ -990,10 +1507,12 @@ if (workshopSelect && workshopSchedule) {
             : "To be announced";
 
         function formatTime(time) {
+
             if (!time) return "To be announced";
 
             const [hours, minutes] = time.split(":");
             const date = new Date();
+
             date.setHours(Number(hours), Number(minutes), 0);
 
             return date.toLocaleTimeString("en-IN", {
@@ -1004,6 +1523,7 @@ if (workshopSelect && workshopSchedule) {
         }
 
         scheduleDate.textContent = date;
+
         scheduleLocation.textContent =
             selectedWorkshop.location || "To be announced";
 
@@ -1012,11 +1532,15 @@ if (workshopSelect && workshopSchedule) {
             formatTime(selectedWorkshop.end_time);
 
         workshopSchedule.hidden = false;
+
     });
 }
 
- // WORKSHOP SEAT AVAILABILITY
+
+// WORKSHOP SEAT AVAILABILITY
+
 async function loadWorkshopAvailability() {
+
     const availabilityCard = document.getElementById("workshopAvailability");
 
     if (!availabilityCard) return;
@@ -1049,6 +1573,7 @@ async function loadWorkshopAvailability() {
     const registered = Number(workshop.registered_seats);
     const total = Number(workshop.total_seats);
     const remaining = Number(workshop.remaining_seats);
+
     const percentage = total > 0
         ? (registered / total) * 100
         : 0;
@@ -1070,12 +1595,16 @@ async function loadWorkshopAvailability() {
 
 loadWorkshopAvailability();
 
+
 // REGISTRATION PAGE - LIVE SEAT AVAILABILITY
+
 const registrationWorkshop = document.getElementById("workshop");
 
 if (registrationWorkshop) {
+
     registrationWorkshop.addEventListener("change", async function () {
-    const workshopId = Number(this.value);
+
+        const workshopId = Number(this.value);
 
         const status = document.getElementById("registrationSeatStatus");
         const count = document.getElementById("registrationSeatCount");
@@ -1083,16 +1612,24 @@ if (registrationWorkshop) {
         const progress = document.getElementById("registrationSeatProgress");
 
         if (!workshopId) {
-            status.textContent = "Select a workshop to check seat availability.";
+
+            status.textContent =
+                "Select a workshop to check seat availability.";
+
             count.textContent = "-- / 30";
-            remaining.textContent = "Choose a workshop to see remaining seats.";
+
+            remaining.textContent =
+                "Choose a workshop to see remaining seats.";
+
             progress.style.width = "0%";
+
             return;
         }
 
         status.textContent = "Loading availability...";
 
         try {
+
             const { data, error } = await window.supabaseClient.rpc(
                 "get_workshop_availability"
             );
@@ -1123,14 +1660,20 @@ if (registrationWorkshop) {
                 `${total > 0 ? (registered / total) * 100 : 0}%`;
 
         } catch (error) {
+
             console.error("Registration availability error:", error);
             status.textContent = "Unable to load availability.";
+
         }
+
     });
 }
+
+
 // ADMIN DASHBOARD - WORKSHOP SEAT AVAILABILITY
 
 async function loadAdminSeatAvailability() {
+
     const container = document.getElementById("adminSeatCards");
 
     if (!container) return;
@@ -1138,6 +1681,7 @@ async function loadAdminSeatAvailability() {
     container.innerHTML = "<p>Loading seat availability...</p>";
 
     try {
+
         const { data, error } = await window.supabaseClient.rpc(
             "get_workshop_availability"
         );
@@ -1150,6 +1694,7 @@ async function loadAdminSeatAvailability() {
         }
 
         container.innerHTML = data.map(workshop => {
+
             const total = Number(workshop.total_seats);
             const registered = Number(workshop.registered_seats);
             const remaining = Number(workshop.remaining_seats);
@@ -1190,16 +1735,21 @@ async function loadAdminSeatAvailability() {
                     <h3>${remaining} seats remaining</h3>
                 </div>
             `;
+
         }).join("");
 
     } catch (error) {
+
         console.error("Admin seat availability error:", error);
+
         container.innerHTML =
             "<p>Unable to load seat availability.</p>";
+
     }
 }
 
 loadAdminSeatAvailability();
+
 
 // SHARED DYNAMIC WORKSHOP CARDS
 // USED ON HOME PAGE AND WORKSHOPS PAGE
@@ -1220,6 +1770,7 @@ async function loadWorkshopCards(container, buttonText) {
         if (error) throw error;
 
         // REMOVE DUPLICATE WORKSHOP RECORDS BY ID
+
         const uniqueWorkshops = [
             ...new Map(
                 (workshops || []).map(workshop => [
@@ -1271,6 +1822,7 @@ async function loadWorkshopCards(container, buttonText) {
 
             const tag = document.createElement("span");
             tag.className = "tag";
+
             tag.textContent =
                 originalTags[workshopId] || "Community Workshop";
 
@@ -1285,13 +1837,14 @@ async function loadWorkshopCards(container, buttonText) {
             link.textContent = buttonText;
 
             const detailPages = {
-    1: "first-aid.html",
-    2: "computer.html",
-    3: "personality.html"
-};
+                1: "first-aid.html",
+                2: "computer.html",
+                3: "personality.html"
+            };
 
-link.href = detailPages[workshopId] ||
-    "workshop-details.html?id=" + encodeURIComponent(workshop.id);
+            link.href = detailPages[workshopId] ||
+                "workshop-details.html?id=" +
+                encodeURIComponent(workshop.id);
 
             body.appendChild(tag);
             body.appendChild(title);
@@ -1311,11 +1864,13 @@ link.href = detailPages[workshopId] ||
 
         container.innerHTML =
             "<p>Unable to load workshops. Please refresh the page.</p>";
+
     }
 }
 
 
 // HOME PAGE
+
 const homeWorkshopList =
     document.getElementById("homeWorkshopList");
 
@@ -1325,6 +1880,7 @@ if (homeWorkshopList) {
 
 
 // WORKSHOPS PAGE
+
 const publicWorkshopList =
     document.getElementById("publicWorkshopList");
 
@@ -1332,7 +1888,9 @@ if (publicWorkshopList) {
     loadWorkshopCards(publicWorkshopList, "View Workshop →");
 }
 
+
 // DYNAMIC DETAILS FOR NEW WORKSHOPS
+
 const detailsPage = document.getElementById("detailsContent");
 
 if (detailsPage) {
@@ -1399,69 +1957,75 @@ if (detailsPage) {
                 "https://www.google.com/maps/search/?api=1&query=" +
                 encodeURIComponent(workshop.location || "");
 
-           // DISPLAY WORKSHOP TOPICS
-const topicsContainer =
-    document.getElementById("workshopTopics");
+            // DISPLAY WORKSHOP TOPICS
 
-topicsContainer.innerHTML = "";
+            const topicsContainer =
+                document.getElementById("workshopTopics");
 
-const topicDescriptions = {
-    "Color Theory":
-        "Understand colour combinations and learn how different colours work together.",
+            topicsContainer.innerHTML = "";
 
-    "Shading Techniques":
-        "Learn basic pencil shading methods to create depth, light and shadow in drawings.",
+            const topicDescriptions = {
 
-    "Color Illusion":
-        "Explore how colours and visual patterns create interesting optical effects."
-};
+                "Color Theory":
+                    "Understand colour combinations and learn how different colours work together.",
 
-if (workshop.topics && workshop.topics.length > 0) {
+                "Shading Techniques":
+                    "Learn basic pencil shading methods to create depth, light and shadow in drawings.",
 
-    workshop.topics.forEach(function (topic, index) {
+                "Color Illusion":
+                    "Explore how colours and visual patterns create interesting optical effects."
 
-        const card = document.createElement("div");
-        card.className = "card";
+            };
 
-        const body = document.createElement("div");
-        body.className = "card-body";
+            if (workshop.topics && workshop.topics.length > 0) {
 
-        const tag = document.createElement("span");
-        tag.className = "tag";
-        tag.textContent =
-            "Topic " + String(index + 1).padStart(2, "0");
+                workshop.topics.forEach(function (topic, index) {
 
-        const heading = document.createElement("h3");
-        heading.textContent = topic;
+                    const card = document.createElement("div");
+                    card.className = "card";
 
-        const description = document.createElement("p");
-        description.textContent =
-            topicDescriptions[topic] ||
-            "Explore this topic through simple explanations and practical activities.";
+                    const body = document.createElement("div");
+                    body.className = "card-body";
 
-        body.appendChild(tag);
-        body.appendChild(heading);
-        body.appendChild(description);
+                    const tag = document.createElement("span");
+                    tag.className = "tag";
+                    tag.textContent =
+                        "Topic " + String(index + 1).padStart(2, "0");
 
-        card.appendChild(body);
-        topicsContainer.appendChild(card);
+                    const heading = document.createElement("h3");
+                    heading.textContent = topic;
 
-    });
+                    const description = document.createElement("p");
 
-} else {
+                    description.textContent =
+                        topicDescriptions[topic] ||
+                        "Explore this topic through simple explanations and practical activities.";
 
-    topicsContainer.textContent =
-        "Topics will be announced soon.";
+                    body.appendChild(tag);
+                    body.appendChild(heading);
+                    body.appendChild(description);
 
-}
+                    card.appendChild(body);
+                    topicsContainer.appendChild(card);
+
+                });
+
+            } else {
+
+                topicsContainer.textContent =
+                    "Topics will be announced soon.";
+
+            }
 
             // SET WORKSHOP ID FOR SEAT AVAILABILITY
+
             document.getElementById("workshopAvailability")
                 .dataset.workshopId = workshop.id;
 
             await loadDynamicWorkshopAvailability(workshop.id);
 
             // REGISTRATION LINKS
+
             document.getElementById("registerButton").href =
                 "register.html?workshop=" + workshop.id;
 
@@ -1481,6 +2045,7 @@ if (workshop.topics && workshop.topics.length > 0) {
         }
 
     }
+
 
     async function loadDynamicWorkshopAvailability(workshopId) {
 
@@ -1530,10 +2095,14 @@ if (workshop.topics && workshop.topics.length > 0) {
     loadWorkshopDetails();
 
 }
+
+
 // LOAD DATE FOR EXISTING STATIC WORKSHOP PAGES
+
 document.addEventListener("DOMContentLoaded", async function () {
 
-    // Skip the new dynamic workshop details page
+    // SKIP THE NEW DYNAMIC WORKSHOP DETAILS PAGE
+
     if (document.getElementById("detailsContent")) return;
 
     const dateElement = document.getElementById("workshopDate");
@@ -1560,7 +2129,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             month: "long",
             year: "numeric"
         });
+
 });
+
 
 // SCROLL REVEAL ANIMATION
 
@@ -1587,25 +2158,31 @@ document.addEventListener("DOMContentLoaded", function () {
     function observeRevealElements(root) {
 
         if (root.matches && root.matches(revealSelector)) {
+
             if (!root.classList.contains("reveal")) {
                 root.classList.add("reveal");
                 observer.observe(root);
             }
+
         }
 
         root.querySelectorAll(revealSelector).forEach(function (element) {
+
             if (!element.classList.contains("reveal")) {
                 element.classList.add("reveal");
                 observer.observe(element);
             }
+
         });
 
     }
 
-    // Animate elements already present
+    // ANIMATE ELEMENTS ALREADY PRESENT
+
     observeRevealElements(document);
 
-    // Detect dynamically loaded workshop cards
+    // DETECT DYNAMICALLY LOADED WORKSHOP CARDS
+
     const mutationObserver = new MutationObserver(function (mutations) {
 
         mutations.forEach(function (mutation) {
@@ -1628,3 +2205,556 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
+
+
+// ========================================
+// SKILLCONNECT - ATTENDANCE HISTORY
+// ========================================
+
+(function () {
+
+    const historyWorkshop = document.getElementById("historyWorkshop");
+    const historyDateButtons = document.getElementById("historyDateButtons");
+    const historyTableBody = document.getElementById("historyTableBody");
+    const historyMessage = document.getElementById("historyMessage");
+
+    const historyTotalCount = document.getElementById("historyTotalCount");
+    const historyPresentCount = document.getElementById("historyPresentCount");
+    const historyAbsentCount = document.getElementById("historyAbsentCount");
+
+    const saveHistoryBtn = document.getElementById("saveHistoryBtn");
+    const downloadHistoryBtn = document.getElementById("downloadHistoryBtn");
+
+    let selectedHistoryDate = "";
+    let selectedHistoryWorkshop = "";
+
+    if (!historyWorkshop) return;
+
+
+    // LOAD ALL WORKSHOPS INCLUDING DEACTIVATED ONES
+
+    async function loadHistoryWorkshops() {
+
+        const { data, error } = await window.supabaseClient
+            .from("workshops")
+            .select("id, title")
+            .order("id", { ascending: true });
+
+        if (error) {
+            console.error("History workshop error:", error);
+
+            historyWorkshop.innerHTML =
+                '<option value="">Unable to load workshops</option>';
+
+            return;
+        }
+
+        historyWorkshop.innerHTML =
+            '<option value="">Choose Workshop</option>';
+
+        data.forEach(workshop => {
+
+            const option = document.createElement("option");
+            option.value = workshop.id;
+            option.textContent = workshop.title;
+
+            historyWorkshop.appendChild(option);
+
+        });
+
+    }
+
+
+    // LOAD AVAILABLE ATTENDANCE DATES
+
+    async function loadHistoryDates(workshopId) {
+
+        selectedHistoryWorkshop = workshopId;
+        selectedHistoryDate = "";
+
+        historyDateButtons.innerHTML = "<p>Loading dates...</p>";
+
+        historyTableBody.innerHTML =
+            '<tr><td colspan="2">Select an attendance date.</td></tr>';
+
+        saveHistoryBtn.disabled = true;
+        downloadHistoryBtn.disabled = true;
+
+        historyTotalCount.textContent = "0";
+        historyPresentCount.textContent = "0";
+        historyAbsentCount.textContent = "0";
+
+        const { data, error } = await window.supabaseClient
+            .from("attendance_records")
+            .select("attendance_date")
+            .eq("workshop_id", Number(workshopId))
+            .order("attendance_date", { ascending: false });
+
+        if (error) {
+
+            console.error("History dates error:", error);
+
+            historyDateButtons.innerHTML =
+                "<p>Unable to load attendance dates.</p>";
+
+            historyMessage.textContent = error.message;
+
+            return;
+        }
+
+        const dates = [...new Set(
+            data.map(record => record.attendance_date)
+        )];
+
+        historyDateButtons.innerHTML = "";
+
+        if (dates.length === 0) {
+
+            historyDateButtons.innerHTML =
+                "<p>No attendance history available for this workshop.</p>";
+
+            return;
+        }
+
+        dates.forEach(date => {
+
+            const button = document.createElement("button");
+
+            button.type = "button";
+            button.className = "btn btn-primary";
+
+            const formattedDate = new Date(date + "T00:00:00")
+                .toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric"
+                });
+
+            button.textContent = formattedDate;
+            button.style.margin = "5px";
+
+            button.addEventListener("click", function () {
+                loadHistoryForDate(date);
+            });
+
+            historyDateButtons.appendChild(button);
+
+        });
+
+        historyMessage.textContent =
+            dates.length + " attendance date(s) available.";
+
+    }
+
+
+    // DISPLAY ATTENDANCE FOR SELECTED DATE
+
+    async function loadHistoryForDate(date) {
+
+        selectedHistoryDate = date;
+
+        historyMessage.textContent = "Loading attendance history...";
+
+        saveHistoryBtn.disabled = true;
+        downloadHistoryBtn.disabled = true;
+
+        const { data: participants, error: participantError } =
+            await window.supabaseClient
+                .from("registrations")
+                .select("id, participant_name")
+                .eq("workshop_id", Number(selectedHistoryWorkshop))
+                .order("created_at", { ascending: true });
+
+        if (participantError) {
+
+            console.error(participantError);
+            historyMessage.textContent = participantError.message;
+
+            return;
+        }
+
+        const { data: records, error: recordsError } =
+            await window.supabaseClient
+                .from("attendance_records")
+                .select("registration_id, status")
+                .eq("workshop_id", Number(selectedHistoryWorkshop))
+                .eq("attendance_date", date);
+
+        if (recordsError) {
+
+            console.error(recordsError);
+            historyMessage.textContent = recordsError.message;
+
+            return;
+        }
+
+        const recordMap = new Map(
+            records.map(record => [
+                Number(record.registration_id),
+                record.status
+            ])
+        );
+
+        historyTableBody.innerHTML = "";
+
+        let present = 0;
+        let absent = 0;
+
+        participants.forEach(person => {
+
+            const row = document.createElement("tr");
+
+            const nameCell = document.createElement("td");
+            nameCell.textContent = person.participant_name;
+
+            const statusCell = document.createElement("td");
+
+            const select = document.createElement("select");
+            select.className = "history-attendance-status";
+            select.dataset.participantId = person.id;
+
+            const chooseOption = document.createElement("option");
+            chooseOption.value = "";
+            chooseOption.textContent = "Choose status";
+
+            select.appendChild(chooseOption);
+
+            ["Present", "Absent"].forEach(status => {
+
+                const option = document.createElement("option");
+                option.value = status;
+                option.textContent = status;
+
+                select.appendChild(option);
+
+            });
+
+            select.value = recordMap.get(Number(person.id)) || "";
+
+            if (select.value === "Present") present++;
+            if (select.value === "Absent") absent++;
+
+            select.addEventListener("change", updateHistorySummary);
+
+            statusCell.appendChild(select);
+
+            row.appendChild(nameCell);
+            row.appendChild(statusCell);
+
+            historyTableBody.appendChild(row);
+
+        });
+
+        historyTotalCount.textContent = participants.length;
+        historyPresentCount.textContent = present;
+        historyAbsentCount.textContent = absent;
+
+        saveHistoryBtn.disabled = participants.length === 0;
+        downloadHistoryBtn.disabled = participants.length === 0;
+
+        const formattedDate = new Date(date + "T00:00:00")
+            .toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric"
+            });
+
+        historyMessage.textContent =
+            "Attendance history loaded for " + formattedDate + ".";
+
+    }
+
+
+    // UPDATE HISTORY SUMMARY
+
+    function updateHistorySummary() {
+
+        const selects = historyTableBody.querySelectorAll(
+            ".history-attendance-status"
+        );
+
+        let present = 0;
+        let absent = 0;
+
+        selects.forEach(select => {
+
+            if (select.value === "Present") present++;
+            if (select.value === "Absent") absent++;
+
+        });
+
+        historyTotalCount.textContent = selects.length;
+        historyPresentCount.textContent = present;
+        historyAbsentCount.textContent = absent;
+
+    }
+
+
+    // SAVE EDITED HISTORICAL ATTENDANCE
+
+    saveHistoryBtn.addEventListener("click", async function () {
+
+        const selects = historyTableBody.querySelectorAll(
+            ".history-attendance-status"
+        );
+
+        if (!selectedHistoryDate || !selectedHistoryWorkshop ||
+            selects.length === 0) {
+            return;
+        }
+
+        const incomplete = Array.from(selects).some(
+            select => !select.value
+        );
+
+        if (incomplete) {
+
+            historyMessage.textContent =
+                "Please choose Present or Absent for every participant.";
+
+            return;
+        }
+
+        saveHistoryBtn.disabled = true;
+        historyMessage.textContent = "Saving changes...";
+
+        const records = Array.from(selects).map(select => ({
+
+            registration_id: Number(select.dataset.participantId),
+            workshop_id: Number(selectedHistoryWorkshop),
+            attendance_date: selectedHistoryDate,
+            status: select.value,
+            updated_at: new Date().toISOString()
+
+        }));
+
+        const { error } = await window.supabaseClient
+            .from("attendance_records")
+            .upsert(records, {
+                onConflict: "registration_id,workshop_id,attendance_date"
+            });
+
+        saveHistoryBtn.disabled = false;
+
+        if (error) {
+
+            console.error(error);
+            historyMessage.textContent = error.message;
+
+            return;
+        }
+
+        historyMessage.textContent =
+            "Historical attendance updated successfully!";
+
+        updateHistorySummary();
+
+    });
+
+
+    // WORKSHOP SELECTION EVENT
+
+    historyWorkshop.addEventListener("change", function () {
+
+        if (!this.value) {
+
+            selectedHistoryWorkshop = "";
+            selectedHistoryDate = "";
+
+            historyDateButtons.innerHTML =
+                "<p>Select a workshop to view available dates.</p>";
+
+            historyTableBody.innerHTML =
+                '<tr><td colspan="2">Select a workshop and attendance date.</td></tr>';
+
+            historyTotalCount.textContent = "0";
+            historyPresentCount.textContent = "0";
+            historyAbsentCount.textContent = "0";
+
+            saveHistoryBtn.disabled = true;
+            downloadHistoryBtn.disabled = true;
+
+            return;
+        }
+
+        loadHistoryDates(this.value);
+
+    });
+
+    loadHistoryWorkshops();
+
+
+    // DOWNLOAD ATTENDANCE HISTORY PDF
+
+    downloadHistoryBtn.addEventListener("click", function () {
+
+        if (!selectedHistoryDate || !selectedHistoryWorkshop) {
+
+            historyMessage.textContent =
+                "Please select an attendance date first.";
+
+            return;
+        }
+
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+
+            historyMessage.textContent =
+                "PDF library could not load. Please check your internet connection.";
+
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const workshopName =
+            historyWorkshop.options[
+                historyWorkshop.selectedIndex
+            ].text;
+
+        const formattedDate = new Date(
+            selectedHistoryDate + "T00:00:00"
+        ).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        });
+
+        const selects = historyTableBody.querySelectorAll(
+            ".history-attendance-status"
+        );
+
+        const participants = Array.from(selects);
+
+        if (participants.length === 0) {
+
+            historyMessage.textContent =
+                "No attendance records available.";
+
+            return;
+        }
+
+        const incomplete = participants.some(
+            select => !select.value
+        );
+
+        if (incomplete) {
+
+            historyMessage.textContent =
+                "Please complete all attendance statuses before downloading.";
+
+            return;
+        }
+
+        const total = participants.length;
+
+        const present = participants.filter(
+            select => select.value === "Present"
+        ).length;
+
+        const absent = participants.filter(
+            select => select.value === "Absent"
+        ).length;
+
+        const percentage = total > 0
+            ? ((present / total) * 100).toFixed(1)
+            : "0.0";
+
+        // REPORT HEADING
+
+        doc.setFontSize(20);
+        doc.setFont("helvetica", "bold");
+
+        doc.text("SkillConnect", 105, 20, {
+            align: "center"
+        });
+
+        doc.setFontSize(14);
+
+        doc.text("Workshop Attendance Report", 105, 30, {
+            align: "center"
+        });
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+
+        doc.text("Workshop: " + workshopName, 15, 45);
+        doc.text("Attendance Date: " + formattedDate, 15, 53);
+
+        // SUMMARY
+
+        doc.setFont("helvetica", "bold");
+        doc.text("Attendance Summary", 15, 68);
+
+        doc.setFont("helvetica", "normal");
+
+        doc.text("Total Participants: " + total, 15, 78);
+        doc.text("Present: " + present, 15, 86);
+        doc.text("Absent: " + absent, 15, 94);
+        doc.text("Attendance Percentage: " + percentage + "%", 15, 102);
+
+        // PARTICIPANT TABLE
+
+        let y = 120;
+
+        doc.setFont("helvetica", "bold");
+
+        doc.text("Sl. No.", 15, y);
+        doc.text("Participant Name", 40, y);
+        doc.text("Attendance Status", 145, y);
+
+        doc.line(15, y + 3, 195, y + 3);
+
+        y += 12;
+
+        doc.setFont("helvetica", "normal");
+
+        participants.forEach((select, index) => {
+
+            if (y > 275) {
+                doc.addPage();
+                y = 20;
+            }
+
+            const row = select.closest("tr");
+
+            const participantName =
+                row.cells[0].textContent.trim();
+
+            doc.text(String(index + 1), 15, y);
+            doc.text(participantName, 40, y);
+            doc.text(select.value, 145, y);
+
+            y += 10;
+
+        });
+
+        // FOOTER
+
+        doc.setFontSize(9);
+
+        doc.text(
+            "Generated by SkillConnect Workshop Management System",
+            105,
+            290,
+            { align: "center" }
+        );
+
+        // DOWNLOAD
+
+        const safeName = workshopName.replace(
+            /[^a-z0-9]/gi,
+            "_"
+        );
+
+        doc.save(
+            "SkillConnect_" + safeName + "_" +
+            selectedHistoryDate + ".pdf"
+        );
+
+        historyMessage.textContent =
+            "Attendance PDF downloaded successfully!";
+
+    });
+
+})();
