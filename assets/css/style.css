@@ -1188,3 +1188,119 @@ img {
 .grid-3 > .card.reveal:nth-child(4) {
     transition-delay: 0.4s;
 }
+
+/* ATTENDANCE SUMMARY CARDS */
+
+.attendance-section .attendance-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin: 22px 0;
+}
+
+.attendance-section .attendance-card {
+    background: #ffffff;
+    border: 1px solid #e8e0f2;
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(80, 60, 110, 0.05);
+}
+
+.attendance-section .attendance-card h3 {
+    color: #77717f;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.attendance-section .attendance-card p {
+    color: #7650a8;
+    font-size: 25px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* MOBILE RESPONSIVENESS */
+
+@media (max-width: 550px) {
+    .attendance-section .attendance-summary {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+
+/* ATTENDANCE PRESENT / ABSENT BUTTONS */
+
+.attendance-choice-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 190px;
+}
+
+.attendance-choice {
+    flex: 1;
+    padding: 9px 16px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    transform: none;
+}
+
+/* PRESENT - PALE GREEN */
+
+.attendance-choice.present {
+    background: #E3F5E8;
+    color: #26834A;
+    border-color: #C5E8D0;
+}
+
+/* ABSENT - PALE RED */
+
+.attendance-choice.absent {
+    background: #FCE8E8;
+    color: #C34242;
+    border-color: #F5CCCC;
+}
+
+/* SELECTED PRESENT - SOFT GREEN */
+
+.attendance-choice.present.selected {
+    background: #A8DDB5;
+    color: #1F6B3B;
+    border-color: #8CCFA0;
+}
+
+/* SELECTED ABSENT - SOFT RED */
+
+.attendance-choice.absent.selected {
+    background: #F3B0B0;
+    color: #A83232;
+    border-color: #E99A9A;
+}
+
+.attendance-choice:hover {
+    transform: translateY(-1px);
+}
+
+.attendance-choice:focus-visible {
+    outline: 2px solid #7650C8;
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .attendance-choice-group {
+        min-width: 160px;
+        gap: 7px;
+    }
+
+    .attendance-choice {
+        padding: 9px 10px;
+        font-size: 13px;
+    }
+}

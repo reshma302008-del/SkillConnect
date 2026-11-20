@@ -1,4 +1,3 @@
-
 // MOBILE MENU
 const menuToggle = document.getElementById("menuToggle");
 const navLinks = document.getElementById("navLinks");
@@ -397,36 +396,51 @@ document.getElementById("totalRegistrations").textContent =
 
             });
 
-            // ACTION BUTTONS
+            
+// ACTION BUTTONS
 
-            const actionCell = document.createElement("td");
+const actionCell = document.createElement("td");
 
-            const editButton = document.createElement("button");
-            editButton.type = "button";
-            editButton.textContent = "Edit";
-            editButton.className = "btn btn-primary";
-            editButton.dataset.id = registration.id;
-            editButton.dataset.action = "edit";
+if (registration.status === "Cancelled") {
 
-            const cancelButton = document.createElement("button");
-            cancelButton.type = "button";
-            cancelButton.textContent =
-                registration.status === "Cancelled"
-                    ? "Cancelled"
-                    : "Cancel";
+    // CANCELLED PARTICIPANT: SHOW ONLY RESTORE
 
-            cancelButton.className = "btn btn-primary";
-            cancelButton.dataset.id = registration.id;
-            cancelButton.dataset.action = "cancel";
+    const restoreButton = document.createElement("button");
 
-            if (registration.status === "Cancelled") {
-                cancelButton.disabled = true;
-            }
+    restoreButton.type = "button";
+    restoreButton.textContent = "Restore";
+    restoreButton.className = "btn btn-primary";
+    restoreButton.dataset.id = registration.id;
+    restoreButton.dataset.action = "restore";
 
-            actionCell.appendChild(editButton);
-            actionCell.appendChild(cancelButton);
+    actionCell.appendChild(restoreButton);
 
-            row.appendChild(actionCell);
+} else {
+
+    // REGISTERED PARTICIPANT: SHOW EDIT AND CANCEL
+
+    const editButton = document.createElement("button");
+
+    editButton.type = "button";
+    editButton.textContent = "Edit";
+    editButton.className = "btn btn-primary";
+    editButton.dataset.id = registration.id;
+    editButton.dataset.action = "edit";
+
+    const cancelButton = document.createElement("button");
+
+    cancelButton.type = "button";
+    cancelButton.textContent = "Cancel";
+    cancelButton.className = "btn btn-primary";
+    cancelButton.dataset.id = registration.id;
+    cancelButton.dataset.action = "cancel";
+
+    actionCell.appendChild(editButton);
+    actionCell.appendChild(cancelButton);
+
+}
+
+row.appendChild(actionCell);
 
             registrationTableBody.appendChild(row);
 
@@ -635,6 +649,115 @@ if (exportRegistrationsBtn) {
         await loadAdminSeatAvailability();
 
     });
+
+    // RESTORE CANCELLED PARTICIPANT
+    // CHECKS WORKSHOP CAPACITY AND PRESERVES ATTENDANCE HISTORY
+
+    registrationTableBody.addEventListener("click", async function (event) {
+
+        const button = event.target.closest(
+            "button[data-action='restore']"
+        );
+
+        if (!button || button.disabled) return;
+
+        const participantId = Number(button.dataset.id);
+
+        const registration = window.currentRegistrations.find(
+            item => Number(item.id) === participantId
+        );
+
+        if (!registration) {
+            alert("Participant not found. Please refresh the page.");
+            return;
+        }
+
+        const confirmed = confirm(
+            "Restore the registration of " +
+            registration.participant_name + "?"
+        );
+
+        if (!confirmed) return;
+
+        button.disabled = true;
+        button.textContent = "Restoring...";
+
+        try {
+
+            // GET WORKSHOP CAPACITY
+
+            const { data: workshop, error: workshopError } =
+                await window.supabaseClient
+                    .from("workshops")
+                    .select("capacity")
+                    .eq("id", registration.workshop_id)
+                    .single();
+
+            if (workshopError) throw workshopError;
+
+            // COUNT CURRENT REGISTERED PARTICIPANTS
+
+            const { count, error: countError } =
+                await window.supabaseClient
+                    .from("registrations")
+                    .select("id", {
+                        count: "exact",
+                        head: true
+                    })
+                    .eq("workshop_id", registration.workshop_id)
+                    .eq("status", "Registered");
+
+            if (countError) throw countError;
+
+            if (Number(count) >= Number(workshop.capacity)) {
+
+                alert(
+                    "This workshop is full. The participant cannot be restored."
+                );
+
+                button.disabled = false;
+                button.textContent = "Restore";
+                return;
+            }
+
+            // RESTORE EXISTING REGISTRATION
+
+            const { data: updatedRegistration, error: updateError } =
+                await window.supabaseClient
+                    .from("registrations")
+                    .update({ status: "Registered" })
+                    .eq("id", participantId)
+                    .eq("status", "Cancelled")
+                    .select("id");
+
+            if (updateError) throw updateError;
+
+            if (!updatedRegistration || updatedRegistration.length === 0) {
+                throw new Error(
+                    "The registration was not updated. Please refresh and try again."
+                );
+            }
+
+            alert("Registration restored successfully!");
+
+            // REFRESH PARTICIPANT TABLE AND SEAT COUNTS
+
+            await loadAdminDashboard();
+            await loadAdminSeatAvailability();
+
+        } catch (error) {
+
+            console.error("Restore registration error:", error);
+
+            alert("Unable to restore registration: " + error.message);
+
+            button.disabled = false;
+            button.textContent = "Restore";
+
+        }
+
+    });
+
 
 
     // SAVE EDITED PARTICIPANT DETAILS
@@ -1354,46 +1477,92 @@ if (loadAttendanceBtn) {
 
             const attendanceCell = document.createElement("td");
 
-            const select = document.createElement("select");
-            select.className = "attendance-status";
-            select.dataset.participantId = person.id;
+            
+// HIDDEN STATUS VALUE (PRESERVES EXISTING SAVE LOGIC)
 
-            const chooseOption = document.createElement("option");
-            chooseOption.value = "";
-            chooseOption.textContent = "Choose status";
-            select.appendChild(chooseOption);
+const select = document.createElement("select");
+select.className = "attendance-status";
+select.dataset.participantId = person.id;
+select.style.display = "none";
 
-            ["Present", "Absent"].forEach(function (status) {
+const chooseOption = document.createElement("option");
+chooseOption.value = "";
+chooseOption.textContent = "Choose status";
+select.appendChild(chooseOption);
 
-                const option = document.createElement("option");
-                option.value = status;
-                option.textContent = status;
+["Present", "Absent"].forEach(function (status) {
+    const option = document.createElement("option");
+    option.value = status;
+    option.textContent = status;
+    select.appendChild(option);
+});
 
-                select.appendChild(option);
+// CHECK EXISTING ATTENDANCE RECORD
 
-            });
+const existingRecord = savedAttendance.find(
+    record =>
+        Number(record.registration_id) === Number(person.id)
+);
 
-            // PREFILL ONLY FROM THE SELECTED DATE'S RECORDS
+if (existingRecord) {
+    select.value = existingRecord.status;
+}
 
-            const existingRecord = savedAttendance.find(
-                record =>
-                    Number(record.registration_id) === Number(person.id)
+// CREATE PRESENT AND ABSENT BUTTONS
+
+const buttonGroup = document.createElement("div");
+buttonGroup.className = "attendance-choice-group";
+
+["Present", "Absent"].forEach(function (status) {
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.textContent = status;
+    button.className =
+        "attendance-choice " + status.toLowerCase();
+
+    button.classList.toggle(
+        "selected",
+        select.value === status
+    );
+
+    button.addEventListener("click", function () {
+
+        select.value = status;
+
+        buttonGroup.querySelectorAll(
+            ".attendance-choice"
+        ).forEach(function (otherButton) {
+
+            otherButton.classList.toggle(
+                "selected",
+                otherButton.textContent === status
             );
 
-            if (existingRecord) {
-                select.value = existingRecord.status;
-            }
+        });
 
-            attendanceCell.appendChild(select);
+        updateAttendanceSummary();
 
-            row.appendChild(nameCell);
-            row.appendChild(emailCell);
-            row.appendChild(workshopCell);
-            row.appendChild(attendanceCell);
+    });
 
-            attendanceTableBody.appendChild(row);
+    buttonGroup.appendChild(button);
 
-            select.addEventListener("change", updateAttendanceSummary);
+});
+
+attendanceCell.appendChild(select);
+attendanceCell.appendChild(buttonGroup);
+// ADD PARTICIPANT DETAILS TO THE ROW
+
+row.appendChild(nameCell);
+row.appendChild(emailCell);
+row.appendChild(workshopCell);
+row.appendChild(attendanceCell);
+
+// DISPLAY THE ROW IN THE ATTENDANCE TABLE
+
+attendanceTableBody.appendChild(row);
+
 
         });
 
@@ -1948,8 +2117,8 @@ if (detailsPage) {
                     )
                     : "Date not announced";
 
-            document.getElementById("workshopTime").textContent =
-                `${workshop.start_time || "Time not announced"} - ${workshop.end_time || ""}`;
+document.getElementById("workshopTime").textContent =
+    `${workshop.start_time || "Time not announced"} - ${workshop.end_time || ""}`;
 
             const mapLink = document.getElementById("mapLink");
 
@@ -2218,9 +2387,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const historyTableBody = document.getElementById("historyTableBody");
     const historyMessage = document.getElementById("historyMessage");
 
-    const historyTotalCount = document.getElementById("historyTotalCount");
-    const historyPresentCount = document.getElementById("historyPresentCount");
-    const historyAbsentCount = document.getElementById("historyAbsentCount");
+    updateHistorySummary();
 
     const saveHistoryBtn = document.getElementById("saveHistoryBtn");
     const downloadHistoryBtn = document.getElementById("downloadHistoryBtn");
@@ -2409,34 +2576,79 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const statusCell = document.createElement("td");
 
-            const select = document.createElement("select");
-            select.className = "history-attendance-status";
-            select.dataset.participantId = person.id;
+        
+// HIDDEN STATUS VALUE
 
-            const chooseOption = document.createElement("option");
-            chooseOption.value = "";
-            chooseOption.textContent = "Choose status";
+const select = document.createElement("select");
+select.className = "history-attendance-status";
+select.dataset.participantId = person.id;
+select.style.display = "none";
 
-            select.appendChild(chooseOption);
+const chooseOption = document.createElement("option");
+chooseOption.value = "";
+chooseOption.textContent = "Choose status";
 
-            ["Present", "Absent"].forEach(status => {
+select.appendChild(chooseOption);
 
-                const option = document.createElement("option");
-                option.value = status;
-                option.textContent = status;
+["Present", "Absent"].forEach(status => {
 
-                select.appendChild(option);
+    const option = document.createElement("option");
+    option.value = status;
+    option.textContent = status;
 
-            });
+    select.appendChild(option);
 
-            select.value = recordMap.get(Number(person.id)) || "";
+});
 
-            if (select.value === "Present") present++;
-            if (select.value === "Absent") absent++;
+// RESTORE PREVIOUSLY SAVED STATUS
 
-            select.addEventListener("change", updateHistorySummary);
+select.value = recordMap.get(Number(person.id)) || "";
 
-            statusCell.appendChild(select);
+// CREATE BUTTONS
+
+const buttonGroup = document.createElement("div");
+buttonGroup.className = "attendance-choice-group";
+
+["Present", "Absent"].forEach(status => {
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.textContent = status;
+    button.className =
+        "attendance-choice " + status.toLowerCase();
+
+    button.classList.toggle(
+        "selected",
+        select.value === status
+    );
+
+    button.addEventListener("click", function () {
+
+        select.value = status;
+
+        buttonGroup.querySelectorAll(
+            ".attendance-choice"
+        ).forEach(otherButton => {
+
+            otherButton.classList.toggle(
+                "selected",
+                otherButton.textContent === status
+            );
+
+        });
+
+        updateHistorySummary();
+
+    });
+
+    buttonGroup.appendChild(button);
+
+});
+
+statusCell.appendChild(select);
+statusCell.appendChild(buttonGroup);
+
 
             row.appendChild(nameCell);
             row.appendChild(statusCell);
@@ -2445,10 +2657,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         });
 
-        historyTotalCount.textContent = participants.length;
-        historyPresentCount.textContent = present;
-        historyAbsentCount.textContent = absent;
-
+        updateHistorySummary();
         saveHistoryBtn.disabled = participants.length === 0;
         downloadHistoryBtn.disabled = participants.length === 0;
 
@@ -2756,5 +2965,6 @@ document.addEventListener("DOMContentLoaded", function () {
             "Attendance PDF downloaded successfully!";
 
     });
+
 
 })();
